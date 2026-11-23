@@ -1,40 +1,140 @@
+
 from collections import deque
-from config.board import NODE_POSITIONS, EDGES
+
+from config.board import NODE_POSITIONS, BOARD_PATHS
 
 
-def build_graph():
+class GraphService:
 
-    graph = {
-        node: [] for node in NODE_POSITIONS
-    }
+    def __init__(self):
+        self.graph = self.build_graph()
 
-    for a, b in EDGES:
+    def build_graph(self):
+        graph = {
+            node: set()
+            for node in NODE_POSITIONS
+        }
 
-        graph[a].append(b)
-        graph[b].append(a)
+        for path in BOARD_PATHS:
+            for i in range(len(path) - 1):
 
-    return graph
+                first = path[i]
+                second = path[i + 1]
 
+                if first not in graph or second not in graph:
+                    raise ValueError(
+                        f"Sommet inconnu : {first} ou {second}"
+                    )
 
-GRAPH = build_graph()
+                graph[first].add(second)
+                graph[second].add(first)
 
+        return graph
 
-def bfs(start, graph=GRAPH):
+    def get_neighbors(self, node):
+        return sorted(self.graph.get(node, set()))
 
-    distances = {start: 0}
+    def are_connected(self, first, second):
+        return second in self.graph.get(first, set())
 
-    queue = deque([start])
+    def degree(self, node):
+        return len(self.graph.get(node, set()))
 
-    while queue:
+    def bfs(self, start):
+        if start not in self.graph:
+            return {}
 
-        current = queue.popleft()
+        distances = {start: 0}
+        queue = deque([start])
 
-        for neighbor in graph[current]:
+        while queue:
+            current = queue.popleft()
 
-            if neighbor not in distances:
+            for neighbor in self.get_neighbors(current):
 
-                distances[neighbor] = distances[current] + 1
+                if neighbor not in distances:
 
-                queue.append(neighbor)
+                    distances[neighbor] = (
+                        distances[current] + 1
+                    )
 
-    return distances
+                    queue.append(neighbor)
+
+        return distances
+
+    def shortest_distance(self, start, destination):
+        distances = self.bfs(start)
+
+        return distances.get(
+            destination,
+            float("inf")
+        )
+
+    def shortest_path(self, start, destination):
+
+        if start not in self.graph:
+            return []
+
+        if destination not in self.graph:
+            return []
+
+        queue = deque([start])
+
+        parents = {
+            start: None
+        }
+
+        while queue:
+
+            current = queue.popleft()
+
+            if current == destination:
+                break
+
+            for neighbor in self.get_neighbors(current):
+
+                if neighbor not in parents:
+
+                    parents[neighbor] = current
+                    queue.append(neighbor)
+
+        if destination not in parents:
+            return []
+
+        path = []
+        current = destination
+
+        while current is not None:
+
+            path.append(current)
+            current = parents[current]
+
+        return list(reversed(path))
+
+    def adjacency_matrix(self):
+
+        nodes = sorted(self.graph)
+
+        matrix = []
+
+        for first in nodes:
+
+            row = []
+
+            for second in nodes:
+
+                row.append(
+                    1 if second in self.graph[first] else 0
+                )
+
+            matrix.append(row)
+
+        return nodes, matrix
+
+    def display_graph(self):
+
+        for node in sorted(self.graph):
+
+            print(
+                f"{node} : {self.get_neighbors(node)}"
+            )

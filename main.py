@@ -1,10 +1,9 @@
-import tkinter as tk
 
 from ui.game_window import GameWindow
 
 
-root = tk.Tk()
+if __name__ == "__main__":
 
-app = GameWindow(root)
+    application = GameWindow()
 
-root.mainloop()
+    application.run()

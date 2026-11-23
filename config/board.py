@@ -1,69 +1,73 @@
-# Coordonnees des 19 sommets
+
+"""
+Configuration du plateau Police-Voleur.
+Le plateau possède 21 sommets.
+"""
+
+BOARD_WIDTH = 820
+BOARD_HEIGHT = 820
+
 NODE_POSITIONS = {
-    "A": (270, 85),
-    "B": (400, 95),
-    "C": (545, 115),
+    # Grand cercle extérieur
+    "A": (250, 140),
+    "B": (410, 110),
+    "C": (570, 140),
+    "S": (680, 250),
+    "R": (710, 410),
+    "Q": (680, 570),
+    "P": (570, 680),
+    "O": (410, 710),
+    "N": (250, 680),
+    "G": (140, 570),
+    "E": (110, 410),
+    "D": (140, 250),
 
-    "D": (70, 260),
-    "E": (65, 405),
-    "F": (145, 405),
-    "G": (85, 500),
+    # Sommets des quatre courbes
+    "T": (410, 235),
+    "U": (585, 410),
+    "M": (410, 585),
+    "F": (235, 410),
 
-    "H": (310, 405),
-    "I": (400, 405),
-    "J": (490, 405),
-    "K": (400, 285),
-    "L": (400, 520),
+    # Cercle intérieur
+    "K": (410, 310),
+    "J": (510, 410),
+    "L": (410, 510),
+    "H": (310, 410),
 
-    "M": (400, 600),
-    "N": (220, 685),
-    "O": (390, 745),
-    "P": (550, 705),
-
-    "Q": (690, 500),
-    "R": (720, 405),
-    "S": (680, 270),
+    # Centre
+    "I": (410, 410),
 }
 
-# Connexions du graphe non oriente
-EDGES = [
-    # Contour exterieur
-    ("A", "B"), ("B", "C"),
-    ("C", "S"), ("S", "R"),
-    ("R", "Q"), ("Q", "P"),
-    ("P", "O"), ("O", "N"),
-    ("N", "G"), ("G", "E"),
-    ("E", "D"), ("D", "A"),
-
-    # Courbes exterieures
-    ("A", "C"),
-    ("D", "G"),
-    ("S", "Q"),
-    ("N", "P"),
-
-    # Axe horizontal
-    ("E", "F"),
-    ("F", "H"),
-    ("H", "I"),
-    ("I", "J"),
-    ("J", "R"),
-
-    # Axe vertical
-    ("B", "K"),
-    ("K", "I"),
-    ("I", "L"),
-    ("L", "M"),
-    ("M", "O"),
-
-    # Cercle central
-    ("K", "J"),
-    ("J", "L"),
-    ("L", "H"),
-    ("H", "K"),
+OUTER_CIRCLE = [
+    "A", "B", "C", "S", "R", "Q",
+    "P", "O", "N", "G", "E", "D", "A"
 ]
 
-BOARD_WIDTH = 790
-BOARD_HEIGHT = 830
+INNER_CIRCLE = [
+    "K", "J", "L", "H", "K"
+]
+
+CURVED_PATHS = [
+    ["A", "T", "C"],
+    ["D", "F", "G"],
+    ["S", "U", "Q"],
+    ["N", "M", "P"],
+]
+
+STRAIGHT_PATHS = [
+    ["B", "T", "K", "I", "L", "M", "O"],
+    ["E", "F", "H", "I", "J", "U", "R"],
+]
+
+BOARD_PATHS = [
+    OUTER_CIRCLE,
+    INNER_CIRCLE,
+] + CURVED_PATHS + STRAIGHT_PATHS
 
 INITIAL_THIEF = "I"
-INITIAL_POLICE = ["B", "E", "R"]
+
+INITIAL_POLICE = [
+    "B",
+    "E",
+    "R",
+]

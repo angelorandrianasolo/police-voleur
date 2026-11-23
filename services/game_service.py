@@ -1,66 +1,145 @@
+
+from config.board import INITIAL_THIEF, INITIAL_POLICE
 from models.game_state import GameState
-
-from config.board import (
-    INITIAL_THIEF,
-    INITIAL_POLICE,
-    EDGES
-)
-
-from services.graph_service import GRAPH
-from services.police_ai import PoliceAI
 
 
 class GameService:
 
-    def __init__(self):
+    # Les seules configurations qui donnent la victoire aux policiers
+    POLICE_WIN_CONFIGURATIONS = {
+        "E": {"A", "T", "C"},
+        "B": {"D", "F", "G"},
+        "O": {"M", "N", "P"},
+        "R": {"O", "U", "S"},
+    }
 
-        self.state = GameState(
-            INITIAL_THIEF,
-            INITIAL_POLICE.copy()
+    def initial_state(self):
+
+        return GameState(
+            thief=INITIAL_THIEF,
+            police=tuple(INITIAL_POLICE),
+            turn="thief",
+            winner=None,
+            police_index=0
         )
 
-        self.ai = PoliceAI()
+    def check_police_victory(self, state):
 
-    def legal_moves(self, position):
+        expected_police = self.POLICE_WIN_CONFIGURATIONS.get(
+            state.thief
+        )
 
-        occupied = self.state.occupied_nodes()
+        if expected_police is None:
+            return False
+
+        return set(state.police) == expected_police
+
+    def thief_moves(self, state, graph):
+
+        occupied = set(state.police)
 
         return [
-            node for node in GRAPH[position]
+            node
+            for node in graph.get_neighbors(state.thief)
             if node not in occupied
         ]
 
-    def move_thief(self, destination):
+    def police_moves(self, state, index, graph):
 
-        if destination not in self.legal_moves(
-            self.state.thief
-        ):
-            return False
+        current = state.police[index]
 
-        self.state.thief = destination
+        occupied = set(state.police)
+        occupied.discard(current)
 
-        self.state.current_turn = "police"
+        return [
+            node
+            for node in graph.get_neighbors(current)
+            if node not in occupied
+        ]
 
-        return True
+    def move_thief(self, state, destination, graph):
 
-    def move_police(self):
+        if state.winner or state.turn != "thief":
+            return state
 
-        for index in range(3):
+        if destination not in self.thief_moves(state, graph):
+            return state
 
-            destination = self.ai.choose_move(
-                self.state.police,
-                index,
-                self.state.thief
+        new_state = GameState(
+            thief=destination,
+            police=state.police,
+            turn="police",
+            winner=None,
+            police_index=0
+        )
+
+        if self.check_police_victory(new_state):
+
+            return GameState(
+                thief=new_state.thief,
+                police=new_state.police,
+                turn=new_state.turn,
+                winner="police",
+                police_index=new_state.police_index
             )
 
-            if destination:
+        return new_state
 
-                self.state.police[index] = destination
+    def move_police(self, state, destination, graph):
 
-        self.state.current_turn = "thief"
+        if state.winner or state.turn != "police":
+            return state
 
-        if not self.legal_moves(self.state.thief):
+        index = state.police_index
 
-            self.state.finished = True
-            self.state.winner = "police"
-            self.state.message = "Les policiers ont gagne !"
+        if destination not in self.police_moves(
+            state, index, graph
+        ):
+            return state
+
+        police = list(state.police)
+        police[index] = destination
+
+        new_state = GameState(
+            thief=state.thief,
+            police=tuple(police),
+            turn="police",
+            winner=None,
+            police_index=index
+        )
+
+        # Vérifier les quatre configurations de victoire
+        if self.check_police_victory(new_state):
+
+            return GameState(
+                thief=new_state.thief,
+                police=new_state.police,
+                turn=new_state.turn,
+                winner="police",
+                police_index=index
+            )
+
+        next_index = index + 1
+
+        if next_index >= 3:
+
+            return GameState(
+                thief=new_state.thief,
+                police=new_state.police,
+                turn="thief",
+                winner=None,
+                police_index=0
+            )
+
+        return GameState(
+            thief=new_state.thief,
+            police=new_state.police,
+            turn="police",
+            winner=None,
+            police_index=next_index
+        )
+
+    def finish_if_blocked(self, state, graph):
+
+        # Le blocage du voleur ne donne plus la victoire.
+        return state

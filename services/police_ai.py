@@ -1,31 +1,50 @@
-from services.graph_service import bfs, GRAPH
-
 
 class PoliceAI:
 
-    def choose_move(self, police, index, thief):
+    def __init__(self, graph, game, minimax):
+        self.graph = graph
+        self.game = game
+        self.minimax = minimax
 
-        current = police[index]
+    def choose_move(self, state):
 
-        occupied = set(police + [thief])
+        # Essayer d'abord Minimax
+        move = self.minimax.choose_police_move(state)
 
-        occupied.remove(current)
+        if move is not None:
+            return move
 
-        distances = bfs(thief)
+        # Si Minimax ne trouve aucun mouvement,
+        # utiliser BFS pour se rapprocher du voleur.
 
-        best_node = None
-        best_distance = float("inf")
+        index = state.police_index
 
-        for neighbor in GRAPH[current]:
+        moves = self.game.police_moves(
+            state,
+            index,
+            self.graph
+        )
 
-            if neighbor in occupied:
-                continue
+        if not moves:
+            return None
 
-            distance = distances.get(neighbor, float("inf"))
+        best_move = None
+        best_score = float("inf")
 
-            if distance < best_distance:
+        for destination in moves:
 
-                best_distance = distance
-                best_node = neighbor
+            distance = self.graph.shortest_distance(
+                destination,
+                state.thief
+            )
 
-        return best_node
+            score = (
+                distance * 10
+                - self.graph.degree(destination)
+            )
+
+            if score < best_score:
+                best_score = score
+                best_move = destination
+
+        return best_move
